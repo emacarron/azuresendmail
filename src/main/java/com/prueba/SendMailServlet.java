@@ -53,8 +53,10 @@ public class SendMailServlet extends HttpServlet {
 		String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
 
 		out.println(docType + "<html>" + "<body>" + "<form action=\"send\" method=\"POST\">"
-				+ "Username: <input type=\"text\" name=\"username\">" + "<br />"
-				+ "Password: <input type=\"password\" name=\"password\" />" + "<input type=\"submit\" value=\"Submit\" />"
+				+ "Username: <input type=\"text\" name=\"username\">" 
+				+ "<br />" + "Password: <input type=\"password\" name=\"password\" />" 
+				+ "<br />" + "To: <input type=\"text\" name=\"to\" />"
+				+ "<input type=\"submit\" value=\"Submit\" />"
 				+ " </form> " + "</body>" + "</html>");
 	}
 
@@ -64,10 +66,11 @@ public class SendMailServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		sendEmail(request.getParameter("username"), request.getParameter("password"));
+		sendEmail(request.getParameter("username"), request.getParameter("password"), request.getParameter("to"));
+		doGet(request, response);
 	}
 
-	public void sendEmail(String username, String password) {
+	public void sendEmail(String username, String password, String to) {
 		Properties prop = new Properties();
 		prop.put("mail.smtp.auth", "true");
 		prop.put("mail.smtp.host", "smtp.office365.com");
@@ -83,7 +86,7 @@ public class SendMailServlet extends HttpServlet {
 			String htmlBody = "<strong>This is an HTML Message</strong>";
 			String textBody = "This is a Text Message.";
 			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress("e.macarron@iberdrola.es"));
+			message.setFrom(new InternetAddress(username));
 			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("eduardo.macarron@gmail.com"));
 			message.setSubject("Testing Subject");
 			message.setText(htmlBody);
