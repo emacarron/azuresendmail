@@ -2,6 +2,7 @@ package com.prueba;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -43,8 +44,6 @@ public class SendMailServlet extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		response.getWriter().append("Served at: ").append(request.getContextPath());
-
 		// Set response content type
 		response.setContentType("text/html");
 
@@ -53,11 +52,10 @@ public class SendMailServlet extends HttpServlet {
 		String docType = "<!doctype html public \"-//w3c//dtd html 4.0 " + "transitional//en\">\n";
 
 		out.println(docType + "<html>" + "<body>" + "<form action=\"send\" method=\"POST\">"
-				+ "Username: <input type=\"text\" name=\"username\">" 
-				+ "<br />" + "Password: <input type=\"password\" name=\"password\" />" 
-				+ "<br />" + "To: <input type=\"text\" name=\"to\" />"
-				+ "<input type=\"submit\" value=\"Submit\" />"
-				+ " </form> " + "</body>" + "</html>");
+				+ "Username: <input type=\"text\" name=\"username\">" + "<br />"
+				+ "Password: <input type=\"password\" name=\"password\" />" + "<br />"
+				+ "To: <input type=\"text\" name=\"to\" />" + "<input type=\"submit\" value=\"Submit\" />" + " </form> "
+				+ "</body>" + "</html>");
 	}
 
 	/**
@@ -66,11 +64,28 @@ public class SendMailServlet extends HttpServlet {
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
-		sendEmail(request.getParameter("username"), request.getParameter("password"), request.getParameter("to"));
-		doGet(request, response);
+		PrintWriter out = response.getWriter();
+
+		try {
+			sendEmail(request.getParameter("username"), request.getParameter("password"), request.getParameter("to"));
+			out.append("Sent!");
+		} catch (Exception e) {
+			out.println("Stack Trace:<br/>");
+			e.printStackTrace(out);
+			out.println("<br/><br/>Error:</br>");
+			out.println(displayErrorForWeb(e));
+		}
 	}
 
-	public void sendEmail(String username, String password, String to) {
+	public String displayErrorForWeb(Throwable t) {
+		StringWriter sw = new StringWriter();
+		PrintWriter pw = new PrintWriter(sw);
+		t.printStackTrace(pw);
+		String stackTrace = sw.toString();
+		return stackTrace.replace(System.getProperty("line.separator"), "<br/>\n");
+	}
+
+	public void sendEmail(String username, String password, String to) throws MessagingException {
 		Properties prop = new Properties();
 		prop.put("mail.smtp.auth", "true");
 		prop.put("mail.smtp.host", "smtp.office365.com");
@@ -82,24 +97,19 @@ public class SendMailServlet extends HttpServlet {
 				return new PasswordAuthentication(username, password);
 			}
 		});
-		try {
-			String htmlBody = "<strong>This is an HTML Message</strong>";
-			String textBody = "This is a Text Message.";
-			Message message = new MimeMessage(session);
-			message.setFrom(new InternetAddress(username));
-			message.setRecipients(Message.RecipientType.TO, InternetAddress.parse("eduardo.macarron@gmail.com"));
-			message.setSubject("Testing Subject");
-			message.setText(htmlBody);
-			message.setContent(textBody, "text/html");
-			Transport.send(message);
+		String htmlBody = "<strong>This is an HTML Message</strong>";
+		String textBody = "This is a Text Message.";
+		Message message = new MimeMessage(session);
+		message.setFrom(new InternetAddress(username));
+		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+		message.setSubject("Testing Subject");
+		message.setText(htmlBody);
+		message.setContent(textBody, "text/html");
+		Transport.send(message);
 
-			logger.info("Done!!");
+		logger.info("Done!!");
 
-			System.out.println("Done");
-
-		} catch (MessagingException e) {
-			e.printStackTrace();
-		}
+		System.out.println("Done");
 
 	}
 }
