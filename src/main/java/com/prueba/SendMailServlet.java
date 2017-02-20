@@ -67,7 +67,11 @@ public class SendMailServlet extends HttpServlet {
 		PrintWriter out = response.getWriter();
 
 		try {
-			sendEmail(request.getParameter("username"), request.getParameter("password"), request.getParameter("to"));
+			String username = request.getParameter("username");
+			String password = request.getParameter("password");
+			String to = request.getParameter("to");
+			out.append("Sending from " +  username + " to " + to + "<br>");
+			sendEmail(username, password, to);
 			out.append("Sent!");
 		} catch (Exception e) {
 			out.println("Stack Trace:<br/>");
